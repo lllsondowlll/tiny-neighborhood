@@ -4,12 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version, e.g. 0.1.0"
+        description: "Release version, 1.0.0"
         required: false
-        default: "0.1.0"
+        default: "1.0.0"
   push:
     tags:
       - "v*"
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -46,12 +49,19 @@ jobs:
 
       - name: Build binaries
         env:
-          TINY_NEIGHBORHOOD_VERSION: ${{ github.event.inputs.version || github.ref_name }}
+          TINY_NEIGHBORHOOD_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || github.event.inputs.version }}
         run: |
           python scripts/build_binaries.py --clean
 
-      - name: Upload release zip
+      - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: tiny-neighborhood-${{ matrix.os }}
           path: release/*.zip
+
+      - name: Upload assets to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: release/*.zip
+          generate_release_notes: true
