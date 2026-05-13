@@ -1,5 +1,10 @@
 # Tiny Neighborhood
 
+
+<img width="1916" height="1142" alt="image" src="https://github.com/user-attachments/assets/2950c2fe-132c-4bc5-bbc8-7c0df7ba76ba" />
+
+
+
 Tiny Neighborhood is a lightweight Original Xbox file manager for Xboxs running in Debug mode.
 
 It includes:
