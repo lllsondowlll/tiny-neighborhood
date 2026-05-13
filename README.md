@@ -1,6 +1,6 @@
 # Tiny Neighborhood
 
-Tiny Neighborhood is a lightweight OG Xbox/Xemu XBDM file manager for TCP port `731`.
+Tiny Neighborhood is a lightweight Original Xbox file manager for Xboxs running in Debug mode.
 
 It includes:
 
