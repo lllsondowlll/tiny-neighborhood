@@ -1,0 +1,13 @@
+[project]
+name = "tiny-neighborhood"
+version = "0.1.0"
+description = "Tiny Neighborhood - OG Xbox XBDM/RDCP GUI and CLI"
+requires-python = ">=3.10"
+authors = [{ name = "Tiny Neighborhood contributors" }]
+license = { text = "MIT" }
+
+[project.optional-dependencies]
+build = ["pyinstaller>=6.20.0"]
+
+[tool.tiny-neighborhood]
+entrypoint = "source/tiny_neighborhood.py"
