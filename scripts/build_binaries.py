@@ -16,6 +16,9 @@ DIST = ROOT / "dist"
 BUILD = ROOT / "build"
 RELEASE = ROOT / "release"
 
+MAIN_BINARY_NAME = "TinyNeighborhood"
+GUI_BINARY_NAME = "TinyNeighborhood_GUI"
+
 
 def run(cmd: list[str]) -> None:
     print("+", " ".join(cmd), flush=True)
@@ -28,6 +31,15 @@ def platform_tag() -> str:
     if system == "darwin":
         system = "macos"
     return f"{system}-{machine}"
+
+
+def normalize_version(version: str) -> str:
+    version = version.strip()
+    if version.startswith("refs/tags/"):
+        version = version.removeprefix("refs/tags/")
+    if version.startswith("v"):
+        version = version[1:]
+    return version or "0.1.0"
 
 
 def exe_name(name: str) -> str:
@@ -45,6 +57,20 @@ def require_pyinstaller() -> None:
         raise SystemExit(2)
 
 
+def dist_artifact(name: str, windowed: bool = False) -> Path:
+    system = platform.system().lower()
+
+    if system == "windows":
+        return DIST / f"{name}.exe"
+
+    if system == "darwin" and windowed:
+        app_bundle = DIST / f"{name}.app"
+        if app_bundle.exists():
+            return app_bundle
+
+    return DIST / name
+
+
 def build_console_binary(clean: bool) -> Path:
     args = [
         sys.executable,
@@ -52,7 +78,7 @@ def build_console_binary(clean: bool) -> Path:
         "PyInstaller",
         "--onefile",
         "--name",
-        "tiny-neighborhood",
+        MAIN_BINARY_NAME,
         "--distpath",
         str(DIST),
         "--workpath",
@@ -61,8 +87,9 @@ def build_console_binary(clean: bool) -> Path:
     ]
     if clean:
         args.insert(4, "--clean")
+
     run(args)
-    return DIST / exe_name("tiny-neighborhood")
+    return dist_artifact(MAIN_BINARY_NAME)
 
 
 def build_gui_binary(clean: bool) -> Path | None:
@@ -78,7 +105,7 @@ def build_gui_binary(clean: bool) -> Path | None:
         "--onefile",
         "--windowed",
         "--name",
-        "TinyNeighborhood",
+        GUI_BINARY_NAME,
         "--distpath",
         str(DIST),
         "--workpath",
@@ -87,19 +114,35 @@ def build_gui_binary(clean: bool) -> Path | None:
     ]
     if clean:
         args.insert(4, "--clean")
+
     run(args)
-    return DIST / exe_name("TinyNeighborhood")
+    return dist_artifact(GUI_BINARY_NAME, windowed=True)
+
+
+def write_zip_file(z: zipfile.ZipFile, path: Path, archive_path: str) -> None:
+    if path.is_file():
+        z.write(path, archive_path)
+        return
+
+    if path.is_dir():
+        for child in path.rglob("*"):
+            if child.is_file():
+                z.write(child, str(Path(archive_path) / child.relative_to(path)))
+        return
+
+    print(f"warning: artifact not found, skipping: {path}", file=sys.stderr)
 
 
 def package_release(version: str, binaries: list[Path]) -> Path:
     RELEASE.mkdir(exist_ok=True)
+    version = normalize_version(version)
     tag = platform_tag()
     zip_path = RELEASE / f"tiny-neighborhood-{version}-{tag}.zip"
 
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
         for binary in binaries:
-            if binary and binary.exists():
-                z.write(binary, f"bin/{binary.name}")
+            if binary:
+                write_zip_file(z, binary, f"bin/{binary.name}")
 
         z.write(SOURCE, "source/tiny_neighborhood.py")
         for name in ["README_RELEASE.md", "requirements-build.txt", "pyproject.toml"]:
