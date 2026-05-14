@@ -16,7 +16,15 @@ from tkinter import filedialog, messagebox, simpledialog, ttk
 
 DEFAULT_PORT = 731
 CHUNK = 64 * 1024
-CONFIG_FILE = Path(__file__).with_name("config.ini")
+
+
+def app_dir() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent
+
+
+CONFIG_FILE = app_dir() / "config.ini"
 
 
 class XBDMError(RuntimeError):
